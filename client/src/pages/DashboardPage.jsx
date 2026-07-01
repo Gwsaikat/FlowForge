@@ -41,7 +41,7 @@ export default function DashboardPage() {
     try {
       const proj = await createProject({ name: newTitle, description: newDesc });
       toast.success('Project created');
-      navigate(`/project/${proj._id}`);
+      navigate(`/projects/${proj._id}`);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to create project');
     }

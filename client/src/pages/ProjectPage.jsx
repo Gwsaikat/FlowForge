@@ -1,19 +1,25 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Plus, Settings, Users, BrainCircuit, Play, ArrowLeft, Target, Bot, Ghost, Lightbulb, LayoutPanelLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Plus, Settings, BrainCircuit, Play, ArrowLeft,
+  Ghost, Lightbulb, LayoutPanelLeft, Bot, Search, X
+} from 'lucide-react';
 import { useGraphStore } from '../store/useGraphStore.js';
+import { useDemoStore } from '../store/useDemoStore.js';
 import { getProject } from '../services/projectService.js';
+import { activateRecruiterDemo, isInDemoMode } from '../demo/demoApi.js';
 
 import GraphCanvas from '../components/GraphCanvas.jsx';
 import TaskDetailDrawer from '../components/TaskDetailDrawer.jsx';
 import AddTaskModal from '../components/AddTaskModal.jsx';
 import SandboxPanel from '../components/SandboxPanel.jsx';
 import GraphHealthPanel from '../components/GraphHealthPanel.jsx';
-import AIAdvisorPanel from '../components/AIAdvisorPanel.jsx';
-import GhostPathPanel from '../components/GhostPathPanel.jsx';
-import SmartDepsPanel from '../components/SmartDepsPanel.jsx';
-import StandupPanel from '../components/StandupPanel.jsx';
+import AIAdvisorPanel from '../components/ai/AIAdvisorPanel.jsx';
+import GhostPathPanel from '../components/ai/GhostPathPanel.jsx';
+import SmartDepsPanel from '../components/ai/SmartDepsPanel.jsx';
+import StandupPanel from '../components/ai/StandupPanel.jsx';
 import CommandPalette from '../components/CommandPalette.jsx';
 import DemoBanner from '../components/DemoBanner.jsx';
 import DeadlineWidget from '../components/DeadlineWidget.jsx';
@@ -21,36 +27,39 @@ import Logo from '../components/ui/Logo.jsx';
 import { PageTransition, SlideIn } from '../components/ui/Motion.jsx';
 
 export default function ProjectPage() {
-  const { id } = useParams();
+  const { projectId } = useParams();
   const navigate = useNavigate();
-  const isDemo = id === 'demo';
+  const isDemoMode = useDemoStore((s) => s.isDemoMode);
 
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // UI State
   const [selectedTask, setSelectedTask] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
-  
-  // Active Side Panel ('sandbox', 'health', 'ai', 'ghost', 'smart-deps', 'standup', 'settings')
+
+  // Active Side Panel
   const [activePanel, setActivePanel] = useState(null);
   const [sandboxState, setSandboxState] = useState(null);
-  
+
   // Mobile tabs
-  const [mobileView, setMobileView] = useState('graph'); // 'graph' or 'list'
+  const [mobileView, setMobileView] = useState('graph');
   const [showSidebar, setShowSidebar] = useState(true);
 
-  const initGraph = useGraphStore((s) => s.initGraph);
   const tasks = useGraphStore((s) => s.tasks);
-  const projectDuration = useGraphStore((s) => s.projectDuration);
-  const runSandbox = useGraphStore((s) => s.runSandbox);
+  const nodes = useGraphStore((s) => s.nodes);
+  const setTasks = useGraphStore((s) => s.setTasks);
+  const loadProjectData = useGraphStore((s) => s.loadProjectData);
 
-  const displayedTasks = sandboxState ? runSandbox(sandboxState) : tasks;
+  const projectDuration = useMemo(() => {
+    if (!tasks.length) return 0;
+    return Math.max(...tasks.map((t) => t.eft || 0));
+  }, [tasks]);
 
   useEffect(() => {
     loadProject();
-    
+
     const handleKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
@@ -59,14 +68,13 @@ export default function ProjectPage() {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [id]);
+  }, [projectId]);
 
   async function loadProject() {
     setLoading(true);
     try {
-      const data = await getProject(id);
-      setProject(data);
-      initGraph(data.tasks);
+      const result = await loadProjectData(projectId);
+      setProject(result.project);
     } catch (err) {
       toast.error('Failed to load project');
       navigate('/dashboard');
@@ -77,11 +85,24 @@ export default function ProjectPage() {
 
   function handleTaskUpdated(task) {
     if (task) {
-      const newTasks = tasks.map((t) => (t._id === task._id ? task : t));
-      initGraph(newTasks);
+      useGraphStore.getState().updateTask(task);
       setSelectedTask(task);
     } else {
       loadProject();
+    }
+  }
+
+  function handleCommandAction(actionId, payload) {
+    switch (actionId) {
+      case 'add-task': setShowAddModal(true); break;
+      case 'ai-advisor': setActivePanel('ai'); break;
+      case 'ghost-path': setActivePanel('ghost'); break;
+      case 'smart-deps': setActivePanel('smart-deps'); break;
+      case 'standup': setActivePanel('standup'); break;
+      case 'sandbox': setActivePanel('sandbox'); break;
+      case 'health': setActivePanel('health'); break;
+      case 'open-task': if (payload) setSelectedTask(payload); break;
+      default: break;
     }
   }
 
@@ -90,8 +111,8 @@ export default function ProjectPage() {
 
   return (
     <PageTransition className="project-page">
-      {isDemo && <DemoBanner />}
-      
+      {isDemoMode && <DemoBanner />}
+
       {/* Top Navbar */}
       <nav className="navbar navbar-premium">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -108,16 +129,16 @@ export default function ProjectPage() {
 
         <div className="navbar-actions">
           <button className="btn btn-ghost-sm" onClick={() => setCmdOpen(true)}>
-            <Search size={14} style={{ display: 'inline', marginRight: 4 }} /> 
-            Search <kbd style={{ marginLeft: 4, opacity: 0.5 }}>⌘K</kbd>
+            <Search size={14} style={{ display: 'inline', marginRight: 4 }} />
+            Search <kbd style={{ marginLeft: 4, opacity: 0.5 }}>Ctrl+K</kbd>
           </button>
-          
+
           <button className="btn btn-ai" onClick={() => setActivePanel(activePanel === 'ai' ? null : 'ai')}>
             <BrainCircuit size={14} /> AI Advisor
           </button>
-          
+
           <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
-          
+
           <button className="icon-btn" title="Toggle Sidebar" onClick={() => setShowSidebar(!showSidebar)}>
             <LayoutPanelLeft size={18} />
           </button>
@@ -135,16 +156,16 @@ export default function ProjectPage() {
               <Plus size={14} /> Add Task
             </button>
             <div style={{ width: 1, height: 20, background: 'var(--border)', margin: '0 4px' }} />
-            
+
             <button className={`btn btn-chip ${activePanel === 'health' ? 'active' : ''}`} onClick={() => setActivePanel(activePanel === 'health' ? null : 'health')}>
               Health Score
             </button>
             <button className={`btn btn-chip ${activePanel === 'sandbox' ? 'active' : ''}`} onClick={() => setActivePanel(activePanel === 'sandbox' ? null : 'sandbox')}>
               <Play size={12} /> Sandbox Mode
             </button>
-            
+
             <div style={{ width: 1, height: 20, background: 'var(--border)', margin: '0 4px' }} />
-            
+
             <button className={`btn btn-chip ${activePanel === 'ghost' ? 'active' : ''}`} onClick={() => setActivePanel(activePanel === 'ghost' ? null : 'ghost')}>
               <Ghost size={12} /> Ghost Paths
             </button>
@@ -156,10 +177,8 @@ export default function ProjectPage() {
             </button>
           </div>
         </div>
-        
-        {project.deadline && (
-          <DeadlineWidget deadline={project.deadline} projectDuration={projectDuration} />
-        )}
+
+        <DeadlineWidget projectId={project._id} />
       </div>
 
       {/* Mobile Tabs */}
@@ -173,14 +192,14 @@ export default function ProjectPage() {
       </div>
 
       {/* Main Workspace Layout */}
-      <div className={`project-layout ${!showSidebar ? 'sidebar-hidden' : ''} ${mobileView === 'list' ? 'graph-hidden' : ''} ${mobileView === 'graph' ? 'sidebar-hidden' : ''}`}>
-        
+      <div className={`project-layout ${!showSidebar ? 'sidebar-hidden' : ''} ${mobileView === 'list' ? 'graph-hidden' : ''} ${mobileView === 'graph' ? 'sidebar-hidden-mobile' : ''}`}>
+
         {/* Left Sidebar */}
         <div className="project-sidebar">
-          
+
           <AnimatePresence mode="wait">
             {activePanel === 'sandbox' && (
-              <SlideIn direction="left">
+              <SlideIn direction="left" key="sandbox">
                 <div className="panel-header-row">
                   <h3><Play size={16} className="text-accent" style={{ display: 'inline', marginRight: 6 }} /> Sandbox</h3>
                   <button className="icon-btn" onClick={() => setActivePanel(null)}><X size={16} /></button>
@@ -190,7 +209,7 @@ export default function ProjectPage() {
             )}
 
             {activePanel === 'health' && (
-              <SlideIn direction="left">
+              <SlideIn direction="left" key="health">
                 <div className="panel-header-row">
                   <h3>Health Metrics</h3>
                   <button className="icon-btn" onClick={() => setActivePanel(null)}><X size={16} /></button>
@@ -199,14 +218,14 @@ export default function ProjectPage() {
               </SlideIn>
             )}
 
-            {activePanel === 'ai' && <AIAdvisorPanel projectId={project._id} onClose={() => setActivePanel(null)} />}
-            {activePanel === 'ghost' && <GhostPathPanel projectId={project._id} onClose={() => setActivePanel(null)} />}
-            {activePanel === 'smart-deps' && <SmartDepsPanel projectId={project._id} onClose={() => setActivePanel(null)} />}
-            {activePanel === 'standup' && <StandupPanel projectId={project._id} onClose={() => setActivePanel(null)} />}
-            
-            {/* Task List (Default view if no panel active, or below panels if room) */}
+            {activePanel === 'ai' && <AIAdvisorPanel key="ai" projectId={project._id} onClose={() => setActivePanel(null)} />}
+            {activePanel === 'ghost' && <GhostPathPanel key="ghost" projectId={project._id} onClose={() => setActivePanel(null)} />}
+            {activePanel === 'smart-deps' && <SmartDepsPanel key="smart-deps" projectId={project._id} onClose={() => setActivePanel(null)} />}
+            {activePanel === 'standup' && <StandupPanel key="standup" projectId={project._id} onClose={() => setActivePanel(null)} />}
+
+            {/* Task List (Default view if no panel active) */}
             {!activePanel && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <motion.div key="tasklist" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <div className="sidebar-header">
                   <h2>Tasks</h2>
                 </div>
@@ -216,9 +235,9 @@ export default function ProjectPage() {
                   </div>
                 )}
                 <div className="task-list">
-                  {displayedTasks.map((t) => (
-                    <div 
-                      key={t._id} 
+                  {tasks.map((t) => (
+                    <div
+                      key={t._id}
                       className={`task-list-item ${t.isCritical ? 'critical' : ''}`}
                       onClick={() => setSelectedTask(t)}
                     >
@@ -231,7 +250,7 @@ export default function ProjectPage() {
                       </div>
                     </div>
                   ))}
-                  {displayedTasks.length === 0 && (
+                  {tasks.length === 0 && (
                     <div className="empty-state" style={{ padding: '2rem 1rem' }}>
                       <p>No tasks found. Click "Add Task" to start building your graph.</p>
                     </div>
@@ -270,14 +289,11 @@ export default function ProjectPage() {
       )}
 
       <CommandPalette
-        isOpen={cmdOpen}
+        open={cmdOpen}
         onClose={() => setCmdOpen(false)}
-        projects={[project]}
-        onLogout={() => navigate('/login')}
+        onAction={handleCommandAction}
+        tasks={tasks}
       />
     </PageTransition>
   );
 }
-
-// Ensure Search/X are imported
-import { Search, X } from 'lucide-react';

@@ -1,5 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore.js';
+import { activateRecruiterDemo } from '../demo/demoApi.js';
+import { DEMO_PROJECT_ID } from '../demo/demoData.js';
 import { Activity, GitMerge, Clock, Zap, Target, Layout, Move, Users, Shield, Rocket, CheckCircle2, ChevronRight, BarChart3, Database, AlertTriangle } from 'lucide-react';
 import AnimatedBackground from '../components/ui/AnimatedBackground.jsx';
 import Logo from '../components/ui/Logo.jsx';
@@ -7,7 +9,13 @@ import { motion } from 'framer-motion';
 import { StaggerList, StaggerItem, ScaleIn, SlideIn, GlowCard } from '../components/ui/Motion.jsx';
 
 export default function LandingPage() {
-  const token = useAuthStore((s) => s.token);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const navigate = useNavigate();
+
+  function handleTryDemo() {
+    activateRecruiterDemo();
+    navigate(`/projects/${DEMO_PROJECT_ID}`);
+  }
 
   const features = [
     { icon: <Activity />, title: 'Real-time CPM', desc: 'Critical Path Method orchestration engine running directly in your browser. Millisecond calculations.' },
@@ -31,7 +39,7 @@ export default function LandingPage() {
       <nav className="landing-nav">
         <Logo size="lg" />
         <div className="landing-nav-actions">
-          {token ? (
+          {isAuthenticated ? (
             <Link to="/dashboard" className="btn btn-hero" style={{ padding: '0.65rem 1.25rem', fontSize: 'var(--text-sm)' }}>
               Enter Dashboard <ChevronRight size={16} />
             </Link>
@@ -57,10 +65,10 @@ export default function LandingPage() {
               Orchestrate complex projects with world-class CPM algorithms, AI-powered risk detection, and a fluid, 60fps graph canvas.
             </p>
             <div className="landing-cta">
-              <Link to={token ? "/dashboard" : "/register"} className="btn btn-hero">
+              <Link to={isAuthenticated ? "/dashboard" : "/register"} className="btn btn-hero">
                 Launch Workspace <Rocket size={18} />
               </Link>
-              <button className="btn btn-demo" onClick={() => window.location.href = '/project/demo'}>
+              <button className="btn btn-demo" onClick={handleTryDemo}>
                 Try Live Demo
               </button>
             </div>
