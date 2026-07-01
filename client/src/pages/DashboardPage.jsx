@@ -1,133 +1,151 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
-import { Plus } from 'lucide-react';
-import AnimatedBackground from '../components/ui/AnimatedBackground.jsx';
-import { logoutUser } from '../services/authService.js';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Layout, FolderKanban } from 'lucide-react';
 import { getProjects, createProject } from '../services/projectService.js';
 import { useAuthStore } from '../store/useAuthStore.js';
-import { useProjectStore } from '../store/useProjectStore.js';
-import { StaggerList, StaggerItem, GlowCard } from '../components/ui/Motion.jsx';
+import toast from 'react-hot-toast';
 import ProjectCard from '../components/ProjectCard.jsx';
+import Logo from '../components/ui/Logo.jsx';
+import { PageTransition, StaggerList } from '../components/ui/Motion.jsx';
 
 export default function DashboardPage() {
-  const { user, logout } = useAuthStore();
-  const { projects, setProjects, addProject } = useProjectStore();
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [creating, setCreating] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  
+  const token = useAuthStore((s) => s.token);
+  const clearToken = useAuthStore((s) => s.clearToken);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!token) return navigate('/login');
+    loadProjects();
+  }, [token, navigate]);
 
   async function loadProjects() {
     setLoading(true);
-    setError(null);
     try {
-      setProjects(await getProjects());
-    } catch {
-      setError('Failed to load projects');
+      const data = await getProjects();
+      setProjects(data);
+    } catch (err) {
+      toast.error('Failed to load projects');
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { loadProjects(); }, [setProjects]);
-
-  async function handleLogout() {
-    try { await logoutUser(); } catch { /* */ }
-    logout();
-    navigate('/');
-  }
-
   async function handleCreate(e) {
     e.preventDefault();
-    setCreating(true);
     try {
-      const project = await createProject({ name, description, deadline: deadline || undefined });
-      addProject(project);
-      setShowModal(false);
+      const proj = await createProject({ name: newTitle, description: newDesc });
       toast.success('Project created');
-      navigate(`/projects/${project._id}`);
+      navigate(`/project/${proj._id}`);
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed');
-    } finally {
-      setCreating(false);
+      toast.error(err.response?.data?.error || 'Failed to create project');
     }
   }
 
+  // Greeting logic
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
   return (
-    <div className="dashboard-page">
+    <PageTransition className="dashboard-page">
       <div className="dashboard-bg" />
+      
       <nav className="navbar navbar-glass">
-        <motion.span className="navbar-brand" initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => navigate('/')}>
-          ⚡ FlowForge
-        </motion.span>
-        <div className="navbar-user">
-          <span>{user?.name}</span>
-          <button className="btn btn-ghost-sm" onClick={handleLogout}>Logout</button>
+        <Logo />
+        <div className="navbar-actions">
+          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+            <Plus size={14} /> New Project
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={() => clearToken()}>
+            Logout
+          </button>
         </div>
       </nav>
 
-      <div className="page-container">
-        <motion.div className="dashboard-header" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+      <main className="page-container">
+        <div className="dashboard-header">
           <div>
-            <h1>Your Projects</h1>
-            <p className="text-secondary">Real-time critical path orchestration</p>
+            <h1>{greeting}</h1>
+            <p className="text-secondary" style={{ marginTop: '0.5rem' }}>Here is an overview of your projects and critical paths.</p>
           </div>
-          <motion.button className="btn btn-primary" onClick={() => setShowModal(true)} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-            <Plus size={18} /> New Project
-          </motion.button>
-        </motion.div>
-
-        {loading && <div className="loading-center"><div className="spinner" /></div>}
-        {error && (
-          <div className="empty-state">
-            <p>{error}</p>
-            <button className="btn btn-primary" onClick={loadProjects}>Retry</button>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div className="surface" style={{ padding: '0.75rem 1.25rem', borderRadius: 'var(--radius-md)' }}>
+              <div className="text-tertiary" style={{ fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Active Projects</div>
+              <div style={{ fontSize: 'var(--text-xl)', fontWeight: 700 }}>{projects.filter(p => p.status === 'active').length}</div>
+            </div>
+            <div className="surface" style={{ padding: '0.75rem 1.25rem', borderRadius: 'var(--radius-md)' }}>
+              <div className="text-tertiary" style={{ fontSize: 'var(--text-xs)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Total Projects</div>
+              <div style={{ fontSize: 'var(--text-xl)', fontWeight: 700 }}>{projects.length}</div>
+            </div>
           </div>
-        )}
+        </div>
 
-        {!loading && !error && projects.length === 0 && (
-          <motion.div className="empty-state glass-card" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <h2>No projects yet</h2>
-            <p>Create your first CPM-powered project</p>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}>New Project</button>
-          </motion.div>
-        )}
-
-        {!loading && !error && projects.length > 0 && (
+        {loading ? (
+          <div className="loading-center">
+            <div className="spinner" /> <span>Loading projects...</span>
+          </div>
+        ) : projects.length > 0 ? (
           <StaggerList className="projects-grid">
-            {projects.map((p) => (
-              <StaggerItem key={p._id}>
-                <GlowCard glow="blue">
-                  <ProjectCard project={p} onClick={() => navigate(`/projects/${p._id}`)} />
-                </GlowCard>
-              </StaggerItem>
+            {projects.map((p, i) => (
+              <ProjectCard key={p._id} project={p} index={i} />
             ))}
           </StaggerList>
+        ) : (
+          <div className="surface empty-state" style={{ padding: '5rem 2rem' }}>
+            <FolderKanban size={48} className="text-accent" style={{ margin: '0 auto 1.5rem', opacity: 0.5 }} />
+            <h2>No projects yet</h2>
+            <p>Create your first project to start mapping your critical paths.</p>
+            <button className="btn btn-hero" onClick={() => setShowModal(true)}>
+              <Plus size={18} /> Create Project
+            </button>
+          </div>
         )}
-      </div>
+      </main>
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <motion.div className="modal glass-card" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} onClick={(e) => e.stopPropagation()}>
-            <h2>New Project</h2>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+              <div className="icon-btn" style={{ background: 'var(--accent-muted)', color: 'var(--accent-hover)' }}><Layout size={20} /></div>
+              <h2 style={{ margin: 0 }}>New Project</h2>
+            </div>
             <form onSubmit={handleCreate}>
-              <div className="form-group"><label>Name</label><input value={name} onChange={(e) => setName(e.target.value)} required /></div>
-              <div className="form-group"><label>Description</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-              <div className="form-group"><label>Deadline</label><input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></div>
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={creating}>{creating ? 'Creating...' : 'Create'}</button>
+              <div className="form-group">
+                <label>Project Name</label>
+                <input
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="e.g. Q3 Website Redesign"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="form-group">
+                <label>Description (Optional)</label>
+                <textarea
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  placeholder="Brief overview of the project goals..."
+                  rows={3}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={!newTitle.trim()}>
+                  Create Project
+                </button>
               </div>
             </form>
-          </motion.div>
+          </div>
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 }

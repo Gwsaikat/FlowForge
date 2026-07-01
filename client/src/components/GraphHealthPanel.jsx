@@ -1,77 +1,74 @@
-import { useEffect, useState } from 'react';
-import { getProjectHealth } from '../services/projectService.js';
-import { useGraphStore } from '../store/useGraphStore.js';
-import { tasksToGraph } from '../utils/graphLayout.js';
+import { Activity, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
-export default function GraphHealthPanel({ projectId, onClose }) {
-  const [report, setReport] = useState(null);
-  const setTasks = useGraphStore((s) => s.setTasks);
-  const tasks = useGraphStore((s) => s.tasks);
+export default function GraphHealthPanel({ tasks }) {
+  if (!tasks || tasks.length === 0) return null;
 
-  useEffect(() => {
-    getProjectHealth(projectId).then(setReport).catch(() => {});
-  }, [projectId]);
+  const total = tasks.length;
+  const critical = tasks.filter((t) => t.isCritical).length;
+  const delayed = tasks.filter((t) => t.status === 'delayed' || t.status === 'blocked').length;
+  const done = tasks.filter((t) => t.status === 'done').length;
 
-  function highlightInGraph() {
-    if (!report) return;
-    const highlightEdges = report.redundantEdges || [];
-    const highlightNodes = [
-      ...(report.godTasks || []).map((g) => g.taskId),
-      ...(report.orphanedTasks || []).map((o) => o.taskId),
-    ];
-    const { nodes, edges } = tasksToGraph(tasks, highlightEdges, highlightNodes);
-    useGraphStore.setState({ nodes, edges });
-  }
+  // Basic health heuristic
+  let score = 100;
+  score -= (critical / total) * 20; // up to 20 pts off for high critical path ratio
+  score -= (delayed / total) * 50; // heavily penalize delayed tasks
+  score += (done / total) * 10; // small boost for completed tasks
+  score = Math.max(0, Math.min(100, Math.round(score)));
 
-  if (!report) return <div className="panel"><div className="spinner" /></div>;
+  let color = 'var(--success)';
+  if (score < 60) color = 'var(--danger)';
+  else if (score < 85) color = 'var(--warning)';
 
   return (
-    <div className="panel">
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <h3>Graph Health Report</h3>
-        <button className="btn btn-secondary" onClick={onClose}>×</button>
+    <div className="panel" style={{ marginTop: '1.25rem' }}>
+      <div className="health-summary">
+        <div className="health-gauge">
+          <svg width="80" height="80" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--bg-primary)" strokeWidth="8" />
+            <circle 
+              cx="50" cy="50" r="40" fill="none" 
+              stroke={color} strokeWidth="8" 
+              strokeDasharray="251.2" 
+              strokeDashoffset={251.2 - (251.2 * score) / 100}
+              transform="rotate(-90 50 50)"
+              style={{ transition: 'stroke-dashoffset 1.5s var(--ease-out-expo)' }}
+            />
+          </svg>
+          <div className="health-gauge-value" style={{ color }}>{score}</div>
+        </div>
+        <div>
+          <div className="health-score-label">Project Health</div>
+          <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
+            {score >= 85 ? 'Healthy and on track.' : score >= 60 ? 'Needs attention.' : 'Critical risks detected.'}
+          </div>
+        </div>
       </div>
-      <div style={{ fontSize: '1.5rem', margin: '1rem 0' }}>
-        Health Score: {report.healthScore}/100 {report.totalSmells > 0 ? '⚠️' : '✅'}
+
+      <div className="health-section">
+        <div className="health-item">
+          <Activity size={14} className="text-accent" />
+          <span>{critical} critical tasks ({Math.round((critical / total) * 100)}%)</span>
+        </div>
+        <div className="health-item">
+          <AlertTriangle size={14} className="text-warning" />
+          <span>{delayed} delayed/blocked tasks</span>
+        </div>
+        <div className="health-item">
+          <CheckCircle size={14} className="text-success" />
+          <span>{done} completed tasks</span>
+        </div>
       </div>
 
-      {report.redundantEdges?.length > 0 && (
-        <section style={{ marginBottom: 12 }}>
-          <h4>Redundant Edges ({report.redundantEdges.length})</h4>
-          {report.redundantEdges.map((e, i) => (
-            <p key={i} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>⚠️ {e.reason}</p>
-          ))}
-        </section>
+      {score < 100 && (
+        <div className="cpm-data-card" style={{ background: 'var(--surface-elevated)', marginTop: '1rem' }}>
+          <h4><Info size={14} style={{ display: 'inline', marginRight: 4 }} /> Recommendation</h4>
+          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: 1.5 }}>
+            {delayed > 0
+              ? 'Resolve blocked tasks immediately to prevent schedule slip.'
+              : 'Try running the AI Advisor to find optimization opportunities on the critical path.'}
+          </p>
+        </div>
       )}
-
-      {report.godTasks?.length > 0 && (
-        <section style={{ marginBottom: 12 }}>
-          <h4>God Tasks ({report.godTasks.length})</h4>
-          {report.godTasks.map((g) => (
-            <p key={g.taskId} style={{ fontSize: '0.85rem' }}>🔴 &quot;{g.title}&quot; has {g.dependentCount} dependents</p>
-          ))}
-        </section>
-      )}
-
-      {report.orphanedTasks?.length > 0 && (
-        <section style={{ marginBottom: 12 }}>
-          <h4>Orphaned Tasks ({report.orphanedTasks.length})</h4>
-          {report.orphanedTasks.map((o) => (
-            <p key={o.taskId} style={{ fontSize: '0.85rem' }}>⚪ &quot;{o.title}&quot; has no connections</p>
-          ))}
-        </section>
-      )}
-
-      {report.longChains?.length > 0 && (
-        <section style={{ marginBottom: 12 }}>
-          <h4>Long Chains ({report.longChains.length})</h4>
-          {report.longChains.map((c, i) => (
-            <p key={i} style={{ fontSize: '0.85rem' }}>⚠️ Chain of {c.length} tasks ({c.chainDuration} days)</p>
-          ))}
-        </section>
-      )}
-
-      <button className="btn btn-primary" onClick={highlightInGraph}>Highlight in Graph</button>
     </div>
   );
 }

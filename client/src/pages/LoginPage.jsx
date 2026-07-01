@@ -1,27 +1,27 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuthStore } from '../store/useAuthStore.js';
+import { loginUser } from '../services/authService.js';
 import toast from 'react-hot-toast';
 import AnimatedBackground from '../components/ui/AnimatedBackground.jsx';
-import { activateRecruiterDemo } from '../demo/demoApi.js';
-import { DEMO_PROJECT_ID } from '../demo/demoData.js';
-import { loginUser } from '../services/authService.js';
-import { useAuthStore } from '../store/useAuthStore.js';
+import Logo from '../components/ui/Logo.jsx';
+import { PageTransition, GlowCard } from '../components/ui/Motion.jsx';
+import { ArrowLeft, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { setUser, setAccessToken } = useAuthStore();
+  const setToken = useAuthStore((s) => s.setToken);
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     try {
-      const { user, accessToken } = await loginUser({ email, password });
-      setUser(user);
-      setAccessToken(accessToken);
+      const res = await loginUser({ email, password });
+      setToken(res.token);
+      toast.success('Welcome back to FlowForge');
       navigate('/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Login failed');
@@ -30,44 +30,51 @@ export default function LoginPage() {
     }
   }
 
-  function launchDemo() {
-    activateRecruiterDemo();
-    toast.success('Demo mode — no login required');
-    navigate(`/projects/${DEMO_PROJECT_ID}`);
-  }
-
   return (
-    <div className="auth-page">
+    <PageTransition className="auth-page">
       <AnimatedBackground />
-      <motion.div
-        className="auth-card glass-card"
-        initial={{ opacity: 0, y: 24, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Link to="/" className="auth-back">← FlowForge</Link>
-        <h1>Welcome back</h1>
-        <p>Sign in to your orchestration engine</p>
+      
+      <GlowCard className="auth-card" glow="purple">
+        <Link to="/" className="auth-back">
+          <ArrowLeft size={16} /> Back to home
+        </Link>
+        
+        <Logo size="lg" style={{ marginBottom: '1.5rem', justifyContent: 'center' }} />
+        <h1 className="text-center">Welcome back</h1>
+        <p className="text-center">Sign in to orchestrate your projects.</p>
+        
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <label>Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+              placeholder="you@company.com"
+            />
           </div>
           <div className="form-group">
             <label>Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+            />
           </div>
-          <motion.button type="submit" className="btn btn-primary btn-full" disabled={loading} whileTap={{ scale: 0.98 }}>
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading} style={{ marginTop: '1rem', padding: '0.75rem' }}>
+            <LogIn size={18} style={{ marginRight: 6 }} />
             {loading ? 'Signing in...' : 'Sign In'}
-          </motion.button>
+          </button>
         </form>
-        <button type="button" className="btn btn-demo btn-full" onClick={launchDemo}>
-          ⚡ Try Live Demo (no login)
-        </button>
-        <p className="auth-footer">
-          No account? <Link to="/register">Register</Link>
-        </p>
-      </motion.div>
-    </div>
+        
+        <div className="auth-footer">
+          Don't have an account? <Link to="/register">Create one now</Link>
+        </div>
+      </GlowCard>
+    </PageTransition>
   );
 }

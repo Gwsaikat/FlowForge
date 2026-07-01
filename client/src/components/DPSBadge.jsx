@@ -1,21 +1,30 @@
-/**
- * Deadline Pressure Score badge with color coding.
- */
+import StatusPill from './ui/StatusPill.jsx';
+
+const LABELS = {
+  pending: 'Pending',
+  active: 'Active',
+  blocked: 'Blocked',
+  delayed: 'Delayed',
+  done: 'Done',
+};
+
 export default function DPSBadge({ dps }) {
-  let label = 'OK';
-  let className = 'badge badge-done';
+  let variant = 'ok';
+  let label = 'On track';
 
   if (dps <= 30) {
-    label = 'HIGH PRESSURE';
-    className = 'badge badge-blocked';
+    variant = 'critical';
+    label = 'High pressure';
   } else if (dps <= 60) {
-    label = 'WATCH';
-    className = 'badge badge-delayed';
+    variant = 'watch';
+    label = 'Watch';
   }
 
   return (
-    <span className={className} title={`Deadline Pressure: ${dps}/100`}>
-      {dps} — {label}
-    </span>
+    <StatusPill variant={variant} className="dps-badge" title={`Deadline pressure: ${dps}/100`}>
+      {dps} · {label}
+    </StatusPill>
   );
 }
+
+export { LABELS as STATUS_LABELS };

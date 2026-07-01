@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { TrendingDown } from 'lucide-react';
 import { getParallelOpportunities } from '../services/projectService.js';
+import IconButton from './ui/IconButton.jsx';
 
 export default function OpportunitiesPanel({ projectId, onClose }) {
   const [opportunities, setOpportunities] = useState([]);
@@ -11,25 +14,26 @@ export default function OpportunitiesPanel({ projectId, onClose }) {
   const totalSaved = opportunities.reduce((s, o) => s + o.timeSaved, 0);
 
   return (
-    <div className="panel">
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <h3>Parallel Opportunities</h3>
-        <button className="btn btn-secondary" onClick={onClose}>×</button>
+    <motion.div className="panel surface" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+      <div className="panel-header-row">
+        <h3>Parallel opportunities</h3>
+        <IconButton onClick={onClose} />
       </div>
-      <p style={{ margin: '0.5rem 0' }}>
-        🚀 {opportunities.length} opportunities — save up to {totalSaved} days
+      <p className="text-secondary panel-intro">
+        {opportunities.length} opportunities · up to {totalSaved} days saved
       </p>
       {opportunities.map((opp, i) => (
-        <div key={i} className="card" style={{ marginTop: 8 }}>
-          <strong>Opportunity {i + 1} — Days {opp.timeWindow.start} to {opp.timeWindow.end}</strong>
+        <div key={i} className="opp-card surface">
+          <div className="opp-header">
+            <TrendingDown size={16} />
+            <span>Days {opp.timeWindow.start}–{opp.timeWindow.end}</span>
+          </div>
           {opp.tasks.map((t) => (
-            <div key={t._id} style={{ fontSize: '0.85rem', marginTop: 4 }}>
-              {t.title} {t.assignee ? `(${t.assignee})` : ''}
-            </div>
+            <div key={t._id} className="opp-task">{t.title}</div>
           ))}
-          <div style={{ color: 'var(--accent-green)', marginTop: 4 }}>⚡ Saves {opp.timeSaved} days</div>
+          <div className="opp-saved">Saves {opp.timeSaved} days</div>
         </div>
       ))}
-    </div>
+    </motion.div>
   );
 }

@@ -1,31 +1,28 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuthStore } from '../store/useAuthStore.js';
+import { registerUser } from '../services/authService.js';
 import toast from 'react-hot-toast';
 import AnimatedBackground from '../components/ui/AnimatedBackground.jsx';
-import { registerUser } from '../services/authService.js';
-import { useAuthStore } from '../store/useAuthStore.js';
+import Logo from '../components/ui/Logo.jsx';
+import { PageTransition, GlowCard } from '../components/ui/Motion.jsx';
+import { ArrowLeft, UserPlus } from 'lucide-react';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
-  const { setUser, setAccessToken } = useAuthStore();
+  const setToken = useAuthStore((s) => s.setToken);
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (password !== confirm) {
-      toast.error('Passwords do not match');
-      return;
-    }
     setLoading(true);
     try {
-      const { user, accessToken } = await registerUser({ name, email, password });
-      setUser(user);
-      setAccessToken(accessToken);
+      const res = await registerUser({ name, email, password });
+      setToken(res.token);
+      toast.success('Account created successfully');
       navigate('/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Registration failed');
@@ -35,37 +32,61 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="auth-page">
+    <PageTransition className="auth-page">
       <AnimatedBackground />
-      <motion.div className="auth-card glass-card" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}>
-        <Link to="/" className="auth-back">← FlowForge</Link>
-        <h1>Create account</h1>
-        <p>Start orchestrating your critical path</p>
+      
+      <GlowCard className="auth-card" glow="blue">
+        <Link to="/" className="auth-back">
+          <ArrowLeft size={16} /> Back to home
+        </Link>
+        
+        <Logo size="lg" style={{ marginBottom: '1.5rem', justifyContent: 'center' }} />
+        <h1 className="text-center">Create Account</h1>
+        <p className="text-center">Start orchestrating your projects today.</p>
+        
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} required />
+            <label>Full Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              autoFocus
+              placeholder="Jane Doe"
+            />
           </div>
           <div className="form-group">
-            <label>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <label>Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@company.com"
+            />
           </div>
           <div className="form-group">
             <label>Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              placeholder="At least 6 characters"
+            />
           </div>
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-          </div>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-            {loading ? 'Creating account...' : 'Register'}
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading} style={{ marginTop: '1rem', padding: '0.75rem' }}>
+            <UserPlus size={18} style={{ marginRight: 6 }} />
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
-        <p style={{ marginTop: 16, textAlign: 'center' }}>
+        
+        <div className="auth-footer">
           Already have an account? <Link to="/login">Sign in</Link>
-        </p>
-      </motion.div>
-    </div>
+        </div>
+      </GlowCard>
+    </PageTransition>
   );
 }

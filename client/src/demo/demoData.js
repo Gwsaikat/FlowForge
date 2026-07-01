@@ -1,18 +1,3 @@
-/** Demo mode flag — persisted so recruiters can refresh the page. */
-const DEMO_KEY = 'flowforge_demo_mode';
-
-export function isDemoSession() {
-  return sessionStorage.getItem(DEMO_KEY) === 'true';
-}
-
-export function enableDemoSession() {
-  sessionStorage.setItem(DEMO_KEY, 'true');
-}
-
-export function disableDemoSession() {
-  sessionStorage.removeItem(DEMO_KEY);
-}
-
 export const DEMO_USER = {
   id: 'demo-user',
   _id: 'demo-user',
@@ -24,7 +9,7 @@ export const DEMO_PROJECT_ID = 'demo-project';
 
 export const DEMO_PROJECT = {
   _id: DEMO_PROJECT_ID,
-  name: 'FlowForge Launch 🚀',
+  name: 'FlowForge Launch',
   description: 'Live demo — explore CPM, AI advisor, and ghost critical path',
   status: 'active',
   projectDuration: 28,
@@ -51,16 +36,16 @@ export const DEMO_TASKS = [
 DEMO_PROJECT.criticalPath = DEMO_TASKS.filter((t) => t.isCritical).map((t) => t._id);
 
 export const DEMO_AI_ADVISOR = {
-  analysis: `## 📊 FlowForge Launch — Graph Intelligence
+  analysis: `## FlowForge Launch — Graph Intelligence
 
 **28 day** project with **6** critical tasks on the main chain.
 
-### ⚡ Top Actions
+### Top Actions
 1. Watch **UI/UX Design** — 62% chance of joining critical path via velocity drift
 2. **AI Integration** has 22/100 DPS — assign buffer or parallelize WebSocket work
 3. Frontend + Graph viz can run in parallel after Backend API completes — save 4 days
 
-### 💡 Unique Insight
+### Unique Insight
 Ghost Critical Path detected: **CPM Algorithm Engine** may silently shift onto the critical chain if the assignee runs 20% over estimate — the deadline holds today but float is down to 1 day.`,
   health: { healthScore: 78, totalSmells: 2, redundantEdges: [], godTasks: [], longChains: [{ length: 6, chainDuration: 22 }], orphanedTasks: [] },
   ghostCriticalPath: {
@@ -80,16 +65,16 @@ Ghost Critical Path detected: **CPM Algorithm Engine** may silently shift onto t
 
 export const DEMO_GHOST_PATH = {
   ...DEMO_AI_ADVISOR.ghostCriticalPath,
-  narrative: '⚠️ 2 tasks may silently join the critical path. Highest risk: "UI/UX Design" at 62% — velocity drift is consuming float before the team notices.',
+  narrative: '2 tasks may silently join the critical path. Highest risk: "UI/UX Design" at 62% — velocity drift is consuming float before the team notices.',
   aiEnabled: true,
 };
 
 export const DEMO_STANDUP = {
-  brief: `**Yesterday:** Completed Research & Requirements and System Architecture ✅
+  brief: `**Yesterday:** Completed Research & Requirements and System Architecture
 
 **Today:** Active work on UI/UX Design and Backend API. CPM engine implementation starting.
 
-**Blockers:** None currently 🟢
+**Blockers:** None currently
 
 **Risk:** AI Integration sits on the critical path with low float — any delay on Backend API or CPM Engine cascades to deployment.`,
   aiEnabled: true,
@@ -111,3 +96,18 @@ export const DEMO_DEADLINE = {
   realisticDeadline: new Date(Date.now() + 33 * 86400000),
   assigneeDrifts: [{ userId: 'demo-user', name: 'Demo Recruiter', drift: 1.15 }],
 };
+
+/** Demo mode flag — persisted so recruiters can refresh the page. */
+const DEMO_KEY = 'flowforge_demo_mode';
+
+export function isDemoSession() {
+  return sessionStorage.getItem(DEMO_KEY) === 'true';
+}
+
+export function enableDemoSession() {
+  sessionStorage.setItem(DEMO_KEY, 'true');
+}
+
+export function disableDemoSession() {
+  sessionStorage.removeItem(DEMO_KEY);
+}

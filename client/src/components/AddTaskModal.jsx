@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { Plus } from 'lucide-react';
 import { createTask } from '../services/projectService.js';
 
 export default function AddTaskModal({ projectId, tasks, members, onClose, onCreated }) {
@@ -21,7 +22,7 @@ export default function AddTaskModal({ projectId, tasks, members, onClose, onCre
         assignee: assignee || undefined,
         dependencies,
       });
-      toast.success('Task created');
+      toast.success('Task created successfully');
       onCreated(task);
       onClose();
     } catch (err) {
@@ -40,55 +41,62 @@ export default function AddTaskModal({ projectId, tasks, members, onClose, onCre
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>Add Task</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+          <div className="icon-btn" style={{ background: 'var(--accent-muted)', color: 'var(--accent-hover)' }}><Plus size={20} /></div>
+          <h2 style={{ margin: 0 }}>Add New Task</h2>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Title</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <label>Task Title</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Design API Schema" required autoFocus />
           </div>
           <div className="form-group">
-            <label>Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+            <label>Description (Optional)</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Brief details about the task..." />
           </div>
-          <div className="form-group">
-            <label>Duration (days)</label>
-            <input
-              type="number"
-              min={0.5}
-              step={0.5}
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Assignee</label>
-            <select value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-              <option value="">Unassigned</option>
-              {members.map((m) => (
-                <option key={m._id || m.id} value={m._id || m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-group">
+              <label>Duration (days)</label>
+              <input
+                type="number"
+                min={0.5}
+                step={0.5}
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Assignee</label>
+              <select value={assignee} onChange={(e) => setAssignee(e.target.value)}>
+                <option value="">Unassigned</option>
+                {members.map((m) => (
+                  <option key={m._id || m.id} value={m._id || m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           {tasks.length > 0 && (
             <div className="form-group">
-              <label>Dependencies</label>
-              {tasks.map((t) => (
-                <label key={t._id} style={{ display: 'block', marginBottom: 4 }}>
-                  <input
-                    type="checkbox"
-                    checked={dependencies.includes(t._id)}
-                    onChange={() => toggleDep(t._id)}
-                  />{' '}
-                  {t.title}
-                </label>
-              ))}
+              <label>Prerequisites (Dependencies)</label>
+              <div style={{ maxHeight: 150, overflowY: 'auto', padding: 8, background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}>
+                {tasks.map((t) => (
+                  <label key={t._id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer', color: 'var(--text-primary)' }}>
+                    <input
+                      type="checkbox"
+                      checked={dependencies.includes(t._id)}
+                      onChange={() => toggleDep(t._id)}
+                    />
+                    {t.title}
+                  </label>
+                ))}
+              </div>
             </div>
           )}
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={loading}>

@@ -1,80 +1,78 @@
 import { useState } from 'react';
-import toast from 'react-hot-toast';
-import { runSandbox, updateTask } from '../services/projectService.js';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, RotateCcw } from 'lucide-react';
 
-export default function SandboxPanel({ projectId, tasks, onClose, onSimulated }) {
-  const [overrides, setOverrides] = useState(
-    Object.fromEntries(tasks.map((t) => [t._id, t.duration]))
-  );
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
+export default function SandboxPanel({ tasks, setSandboxState }) {
+  const [overrides, setOverrides] = useState({});
 
-  async function handleSimulate() {
-    setLoading(true);
-    try {
-      const taskOverrides = Object.entries(overrides).map(([taskId, duration]) => ({
-        taskId,
-        duration: Number(duration),
-      }));
-      const data = await runSandbox(projectId, taskOverrides);
-      setResults(data);
-      onSimulated?.(data);
-      toast.success('Simulation complete');
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Simulation failed');
-    } finally {
-      setLoading(false);
-    }
-  }
+  const handleSlider = (taskId, newDuration) => {
+    setOverrides((prev) => ({ ...prev, [taskId]: Number(newDuration) }));
+  };
 
-  async function handleApply() {
-    if (!window.confirm('This will update real task durations. Are you sure?')) return;
-    for (const task of tasks) {
-      if (overrides[task._id] !== task.duration) {
-        await updateTask(projectId, task._id, { duration: overrides[task._id] });
-      }
-    }
-    toast.success('Applied to real project');
-    onClose();
-  }
+  const handleApply = () => setSandboxState(overrides);
+
+  const handleReset = () => {
+    setOverrides({});
+    setSandboxState(null);
+  };
+
+  const hasChanges = Object.keys(overrides).length > 0;
 
   return (
-    <div className="panel">
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <h3>🧪 Sandbox Mode</h3>
-        <button className="btn btn-secondary" onClick={onClose}>Close</button>
+    <div className="sandbox-panel">
+      <div className="panel-intro text-secondary">
+        Adjust task durations below to preview their impact on the critical path without saving changes.
       </div>
-      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '8px 0' }}>
-        Changes here don&apos;t affect the real project until you apply them.
-      </p>
-      {tasks.map((t) => (
-        <div key={t._id} style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: '0.85rem' }}>{t.title} (was {t.duration}d)</div>
-          <input
-            type="range"
-            min={0.5}
-            max={30}
-            step={0.5}
-            value={overrides[t._id]}
-            onChange={(e) => setOverrides({ ...overrides, [t._id]: Number(e.target.value) })}
-            style={{ width: '100%' }}
-          />
-          <span style={{ fontSize: '0.85rem' }}>{overrides[t._id]} days</span>
-        </div>
-      ))}
-      <button className="btn btn-primary" onClick={handleSimulate} disabled={loading} style={{ marginTop: 8 }}>
-        Run Simulation
-      </button>
-      {results && (
-        <div style={{ marginTop: 12 }}>
-          <div>Original: Day {results.original.projectDuration}</div>
-          <div>Simulated: Day {results.simulated.projectDuration} {results.impact.deadlineShift > 0 && `⚠️ +${results.impact.deadlineShift}`}</div>
-          {results.impact.criticalPathChanged && <div>Critical path changed!</div>}
-          <button className="btn btn-secondary" style={{ marginTop: 8 }} onClick={handleApply}>
-            Apply to Real Project?
-          </button>
-        </div>
-      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: 300, overflowY: 'auto', paddingRight: '0.5rem' }}>
+        {tasks.map((t) => {
+          const val = overrides[t._id] ?? t.duration;
+          const isChanged = val !== t.duration;
+
+          return (
+            <div key={t._id} className="sandbox-row">
+              <div className="sandbox-label" style={{ color: isChanged ? 'var(--accent-hover)' : 'inherit' }}>
+                {t.title}
+              </div>
+              <input
+                type="range"
+                min={0.5}
+                max={Math.max(20, t.duration * 2)}
+                step={0.5}
+                value={val}
+                onChange={(e) => handleSlider(t._id, e.target.value)}
+              />
+              <span className="mono" style={{ width: 45, textAlign: 'right', color: isChanged ? 'var(--accent-hover)' : 'inherit', fontWeight: isChanged ? 700 : 400 }}>
+                {val}d
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="panel-actions" style={{ marginTop: '1.25rem', justifyContent: 'flex-end' }}>
+        <button className="btn btn-ghost" onClick={handleReset} disabled={!hasChanges}>
+          <RotateCcw size={14} /> Reset
+        </button>
+        <button className="btn btn-primary" onClick={handleApply} disabled={!hasChanges}>
+          <Play size={14} /> Preview Impact
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {hasChanges && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className="sandbox-banner" style={{ borderRadius: 'var(--radius-md)', padding: '0.8rem', border: '1px dashed var(--accent)' }}>
+              Unsaved sandbox state active.
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

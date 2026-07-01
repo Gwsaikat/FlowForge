@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getProjectDeadline } from '../services/projectService.js';
+import StatusPill from './ui/StatusPill.jsx';
 
 export default function VelocityPanel({ projectId }) {
   const [drifts, setDrifts] = useState([]);
@@ -13,16 +14,21 @@ export default function VelocityPanel({ projectId }) {
   if (!drifts.length) return null;
 
   return (
-    <div className="panel">
-      <h4>Team Velocity</h4>
+    <div className="panel surface velocity-panel">
+      <h4>Team velocity</h4>
       {drifts.map((m) => {
-        let icon = '✅ On target';
-        if (m.drift > 1.1) icon = `⚠️ +${Math.round((m.drift - 1) * 100)}% over estimates`;
-        else if (m.drift < 0.9) icon = '🚀 Finishing early';
+        let variant = 'ok';
+        let note = 'On target';
+        if (m.drift > 1.1) { variant = 'watch'; note = `+${Math.round((m.drift - 1) * 100)}% over`; }
+        else if (m.drift < 0.9) { variant = 'ok'; note = 'Ahead of plan'; }
+
         return (
-          <div key={m.userId} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+          <div key={m.userId} className="velocity-row">
             <span>{m.name}</span>
-            <span>{m.drift.toFixed(1)}x {icon}</span>
+            <span className="velocity-right">
+              <span className="mono">{m.drift.toFixed(1)}x</span>
+              <StatusPill variant={variant}>{note}</StatusPill>
+            </span>
           </div>
         );
       })}

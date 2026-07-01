@@ -14,10 +14,21 @@ const ACTIONS = [
 
 export default function CommandPalette({ open, onClose, onAction, tasks = [] }) {
   const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const inputRef = useRef(null);
 
-  const filtered = ACTIONS.filter((a) =>
+  const filteredActions = ACTIONS.filter((a) =>
     a.label.toLowerCase().includes(query.toLowerCase())
   );
+
+  const filteredTasks = tasks.filter((t) => 
+    t.title.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const allItems = [
+    ...filteredActions.map(a => ({ type: 'action', ...a })),
+    ...filteredTasks.map(t => ({ type: 'task', id: t._id, label: t.title, icon: Zap }))
+  ];
 
   const handleKey = useCallback(
     (e) => {
@@ -26,13 +37,23 @@ export default function CommandPalette({ open, onClose, onAction, tasks = [] }) 
         onClose();
       }
       if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowDown') setSelectedIndex((i) => Math.min(i + 1, allItems.length - 1));
+      if (e.key === 'ArrowUp') setSelectedIndex((i) => Math.max(i - 1, 0));
+      if (e.key === 'Enter' && allItems[selectedIndex]) {
+        const item = allItems[selectedIndex];
+        if (item.type === 'action') onAction(item.id);
+        else onAction('open-task', tasks.find(t => t._id === item.id));
+        onClose();
+      }
     },
-    [onClose]
+    [onClose, allItems, selectedIndex, onAction, tasks]
   );
 
   useEffect(() => {
     if (open) {
       setQuery('');
+      setSelectedIndex(0);
+      setTimeout(() => inputRef.current?.focus(), 50);
       window.addEventListener('keydown', handleKey);
       return () => window.removeEventListener('keydown', handleKey);
     }
@@ -57,39 +78,31 @@ export default function CommandPalette({ open, onClose, onAction, tasks = [] }) 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="cmd-search">
-              <Search size={18} />
+              <Search size={18} className="text-secondary" />
               <input
-                autoFocus
+                ref={inputRef}
                 placeholder="Type a command or search..."
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
               />
-              <kbd>ESC</kbd>
+              <kbd className="cmd-key">ESC</kbd>
             </div>
             <div className="cmd-list">
-              {filtered.map((action, i) => (
-                <motion.button
-                  key={action.id}
-                  className="cmd-item"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  onClick={() => { onAction(action.id); onClose(); }}
+              {allItems.map((item, i) => (
+                <button
+                  key={item.id}
+                  className={`cmd-item ${i === selectedIndex ? 'bg-accent-muted' : ''}`}
+                  onMouseEnter={() => setSelectedIndex(i)}
+                  onClick={() => {
+                    item.type === 'action' ? onAction(item.id) : onAction('open-task', tasks.find(t => t._id === item.id));
+                    onClose();
+                  }}
                 >
-                  <action.icon size={16} />
-                  <span>{action.label}</span>
-                  <kbd>{action.shortcut}</kbd>
-                </motion.button>
-              ))}
-              {query && tasks.filter((t) => t.title.toLowerCase().includes(query.toLowerCase())).map((task) => (
-                <motion.button
-                  key={task._id}
-                  className="cmd-item"
-                  onClick={() => { onAction('open-task', task); onClose(); }}
-                >
-                  <Zap size={16} />
-                  <span>{task.title}</span>
-                </motion.button>
+                  <item.icon size={16} className="text-tertiary" />
+                  <span>{item.label}</span>
+                  {item.shortcut && <kbd className="cmd-key">{item.shortcut}</kbd>}
+                  {i === selectedIndex && <kbd className="cmd-key">↵</kbd>}
+                </button>
               ))}
             </div>
           </motion.div>
