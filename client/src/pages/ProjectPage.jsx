@@ -202,7 +202,7 @@ export default function ProjectPage() {
               <SlideIn direction="left" key="sandbox">
                 <div className="panel-header-row">
                   <h3><Play size={16} className="text-accent" style={{ display: 'inline', marginRight: 6 }} /> Sandbox</h3>
-                  <button className="icon-btn" onClick={() => setActivePanel(null)}><X size={16} /></button>
+                  <button className="icon-btn" onClick={() => { setActivePanel(null); useGraphStore.getState().setHighlights({ edges: [], nodes: [] }); }}><X size={16} /></button>
                 </div>
                 <SandboxPanel tasks={tasks} setSandboxState={setSandboxState} />
               </SlideIn>
@@ -212,16 +212,16 @@ export default function ProjectPage() {
               <SlideIn direction="left" key="health">
                 <div className="panel-header-row">
                   <h3>Health Metrics</h3>
-                  <button className="icon-btn" onClick={() => setActivePanel(null)}><X size={16} /></button>
+                  <button className="icon-btn" onClick={() => { setActivePanel(null); useGraphStore.getState().setHighlights({ edges: [], nodes: [] }); }}><X size={16} /></button>
                 </div>
                 <GraphHealthPanel tasks={tasks} />
               </SlideIn>
             )}
 
-            {activePanel === 'ai' && <AIAdvisorPanel key="ai" projectId={project._id} onClose={() => setActivePanel(null)} />}
-            {activePanel === 'ghost' && <GhostPathPanel key="ghost" projectId={project._id} onClose={() => setActivePanel(null)} />}
-            {activePanel === 'smart-deps' && <SmartDepsPanel key="smart-deps" projectId={project._id} onClose={() => setActivePanel(null)} />}
-            {activePanel === 'standup' && <StandupPanel key="standup" projectId={project._id} onClose={() => setActivePanel(null)} />}
+            {activePanel === 'ai' && <AIAdvisorPanel key="ai" projectId={project._id} onClose={() => { setActivePanel(null); useGraphStore.getState().setHighlights({ edges: [], nodes: [] }); }} />}
+            {activePanel === 'ghost' && <GhostPathPanel key="ghost" projectId={project._id} onClose={() => { setActivePanel(null); useGraphStore.getState().setHighlights({ edges: [], nodes: [] }); }} onHighlight={(nodes) => useGraphStore.getState().setHighlights({ nodes, edges: [] })} />}
+            {activePanel === 'smart-deps' && <SmartDepsPanel key="smart-deps" projectId={project._id} onClose={() => { setActivePanel(null); useGraphStore.getState().setHighlights({ edges: [], nodes: [] }); }} />}
+            {activePanel === 'standup' && <StandupPanel key="standup" projectId={project._id} onClose={() => { setActivePanel(null); useGraphStore.getState().setHighlights({ edges: [], nodes: [] }); }} />}
 
             {/* Task List (Default view if no panel active) */}
             {!activePanel && (

@@ -11,25 +11,28 @@ export const useGraphStore = create((set, get) => ({
   isRecalculating: false,
   highlights: { edges: [], nodes: [] },
 
-  setTasks: (tasks) => {
-    const { nodes, edges } = tasksToGraph(tasks);
-    set({
+  setTasks: (tasks) => set((s) => {
+    const { nodes, edges } = tasksToGraph(tasks, s.highlights.edges, s.highlights.nodes);
+    return {
       tasks,
       nodes,
       edges,
       criticalPath: tasks.filter((t) => t.isCritical).map((t) => t._id),
-    });
-  },
+    };
+  }),
 
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
   setCriticalPath: (criticalPath) => set({ criticalPath }),
-  setHighlights: (highlights) => set({ highlights }),
+  setHighlights: (highlights) => set((s) => {
+    const { nodes, edges } = tasksToGraph(s.tasks, highlights.edges || [], highlights.nodes || []);
+    return { highlights, nodes, edges };
+  }),
 
   updateTask: (task) =>
     set((s) => {
       const tasks = s.tasks.map((t) => (t._id === task._id ? task : t));
-      const { nodes, edges } = tasksToGraph(tasks);
+      const { nodes, edges } = tasksToGraph(tasks, s.highlights.edges, s.highlights.nodes);
       return { tasks, nodes, edges };
     }),
 
