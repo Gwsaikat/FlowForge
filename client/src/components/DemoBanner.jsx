@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useDemoStore } from '../store/useDemoStore.js';
 import { useAuthStore } from '../store/useAuthStore.js';
+import { Info } from 'lucide-react';
 import StatusPill from './ui/StatusPill.jsx';
 
 export default function DemoBanner() {
