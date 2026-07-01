@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Settings, BrainCircuit, Play, ArrowLeft,
-  Ghost, Lightbulb, LayoutPanelLeft, Bot, Search, X
+  Ghost, Lightbulb, LayoutPanelLeft, Bot, Search, X, Monitor
 } from 'lucide-react';
 import { useGraphStore } from '../store/useGraphStore.js';
 import { useDemoStore } from '../store/useDemoStore.js';
@@ -44,7 +44,7 @@ export default function ProjectPage() {
   const [sandboxState, setSandboxState] = useState(null);
 
   // Mobile tabs
-  const [mobileView, setMobileView] = useState('graph');
+  const [mobileView, setMobileView] = useState('list');
   const [showSidebar, setShowSidebar] = useState(true);
 
   const tasks = useGraphStore((s) => s.tasks);
@@ -263,6 +263,10 @@ export default function ProjectPage() {
 
         {/* Right Graph Canvas */}
         <div className="project-graph">
+          <div className="mobile-graph-warning">
+            <Monitor size={18} />
+            <span>Graph visualization is best viewed on a desktop full screen</span>
+          </div>
           <GraphCanvas onTaskClick={setSelectedTask} sandboxMode={!!sandboxState} />
         </div>
       </div>
