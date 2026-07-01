@@ -4,7 +4,6 @@ import { useAuth } from './hooks/useAuth.js';
 import { useAuthStore } from './store/useAuthStore.js';
 import { useDemoStore } from './store/useDemoStore.js';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
-import DemoBanner from './components/DemoBanner.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
@@ -19,7 +18,6 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      {isDemoMode && <DemoBanner />}
       <Toaster
         position="top-right"
         toastOptions={{

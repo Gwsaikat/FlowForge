@@ -15,8 +15,12 @@ export default function StandupPanel({ projectId, onClose }) {
   }, [projectId]);
 
   function copy() {
-    navigator.clipboard.writeText(data?.brief || '');
-    toast.success('Copied to clipboard');
+    try {
+      navigator.clipboard.writeText(data?.brief || '');
+      toast.success('Copied to clipboard');
+    } catch {
+      toast.error('Copy not supported on this device');
+    }
   }
 
   return (

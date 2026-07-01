@@ -2299,19 +2299,143 @@ input, select, textarea {
     grid-template-columns: 1fr;
   }
 
-  .navbar-actions { gap: 0.5rem; }
-  .navbar-premium { padding: 0 1rem; }
+  /* ─── Navbar Mobile ─── */
+  .navbar-premium {
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+  }
 
-  .btn-ai {
-    padding: 0.4rem 0.65rem;
+  .navbar-premium > div:first-child {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .navbar-premium > div:first-child > div {
+    min-width: 0;
+  }
+
+  .navbar-premium > div:first-child > div > div:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: var(--text-base) !important;
+  }
+
+  .navbar-actions {
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  .navbar-actions .btn-ghost-sm {
+    display: none;
+  }
+
+  .navbar-actions .btn-ai {
+    padding: 0.35rem 0.55rem;
     font-size: var(--text-xs);
   }
 
+  .navbar-actions .btn-ai span,
+  .btn-ai kbd {
+    display: none;
+  }
+
+  .navbar-actions > div[style] {
+    display: none !important;
+  }
+
+  /* ─── Mobile Tabs ─── */
   .mobile-view-tabs { display: flex; }
 
-  .project-toolbar { padding: 0.6rem 0.85rem; }
-  .toolbar-btns { padding: 0 0.85rem 0.6rem; gap: 0.35rem; }
+  /* ─── Toolbar Mobile ─── */
+  .project-toolbar {
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
+  }
 
+  .toolbar-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin: 0 -0.75rem;
+    padding: 0 0.75rem;
+  }
+
+  .toolbar-scroll::-webkit-scrollbar { display: none; }
+
+  .toolbar-btns {
+    padding: 0;
+    gap: 0.35rem;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  .btn-chip {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+
+  .btn-sm {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+
+  /* ─── Deadline Widget Mobile ─── */
+  .deadline-widget {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* ─── Project Layout Mobile ─── */
+  .project-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
+
+  .project-layout .project-sidebar {
+    width: 100%;
+    min-width: unset;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    overflow-y: visible;
+  }
+
+  .project-layout .project-graph {
+    width: 100%;
+    min-height: 55vh;
+    height: 55vh;
+  }
+
+  /* Mobile view toggle: when "List & Panels" is active */
+  .project-layout.graph-hidden .project-graph {
+    display: none;
+  }
+
+  .project-layout.graph-hidden .project-sidebar {
+    display: block;
+    max-height: none;
+  }
+
+  /* Mobile view toggle: when "Graph View" is active */
+  .project-layout.sidebar-hidden-mobile .project-sidebar {
+    display: none;
+  }
+
+  .project-layout.sidebar-hidden-mobile .project-graph {
+    display: block;
+    min-height: 65vh;
+    height: calc(100vh - 240px);
+  }
+
+  /* Desktop sidebar toggle still works */
+  .project-layout.sidebar-hidden .project-sidebar { display: none; }
+
+  /* ─── AI Panels Mobile ─── */
   .ai-panel {
     margin: 0.6rem;
     border-radius: var(--radius-lg);
@@ -2325,6 +2449,7 @@ input, select, textarea {
   .ai-stat-cards { flex-wrap: wrap; }
   .ai-stat { min-width: calc(50% - 0.3rem); }
 
+  /* ─── Drawer Mobile ─── */
   .drawer {
     width: 100%;
     max-width: 100%;
@@ -2332,15 +2457,18 @@ input, select, textarea {
     border-radius: 0;
   }
 
+  /* ─── Command Palette Mobile ─── */
   .cmd-overlay { padding-top: 8vh; }
   .cmd-palette { width: 95%; border-radius: var(--radius-lg); }
 
-  .deadline-widget {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
   .auth-card { padding: 1.5rem; }
+
+  /* ─── Demo Banner Mobile ─── */
+  .demo-banner {
+    font-size: var(--text-xs);
+    padding: 0.4rem 0.75rem;
+    gap: 0.5rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2350,7 +2478,11 @@ input, select, textarea {
   .preview-window { max-width: 100%; }
 
   .project-sidebar { padding: 1rem; }
-  .toolbar-btns { padding: 0 0.6rem 0.5rem; }
+  .toolbar-btns { padding: 0; }
+
+  .navbar-premium > div:first-child > div > div:first-child {
+    font-size: var(--text-sm) !important;
+  }
 }
 
 /* ─── Component utilities ─── */
