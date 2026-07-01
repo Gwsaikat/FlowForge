@@ -2413,12 +2413,16 @@ input, select, textarea {
 
   /* Mobile view toggle: when "List & Panels" is active */
   .project-layout.graph-hidden .project-graph {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
   }
 
   .project-layout.graph-hidden .project-sidebar {
     display: block;
     max-height: none;
+    width: 100%;
   }
 
   /* Mobile view toggle: when "Graph View" is active */
@@ -2427,6 +2431,10 @@ input, select, textarea {
   }
 
   .project-layout.sidebar-hidden-mobile .project-graph {
+    position: relative;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
     display: block;
     min-height: 65vh;
     height: calc(100vh - 240px);
