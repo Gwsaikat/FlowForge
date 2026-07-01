@@ -1,0 +1,115 @@
+# ============================================================
+# FLOWFORGE — CURSOR RULES FILE
+# ============================================================
+# HOW TO USE THIS FILE:
+# 1. Open your FlowForge project folder in Cursor
+# 2. Create a file at the root called: .cursorrules
+# 3. Paste everything below the dashed line into that file
+# 4. Save it. Cursor will now read these rules in EVERY chat.
+# ============================================================
+
+------- PASTE EVERYTHING BELOW INTO .cursorrules -------
+
+# FlowForge — Project Rules for Cursor Agent
+
+## What This Project Is
+FlowForge is a real-time Critical Path Method (CPM) orchestration engine for software teams.
+It is a full-stack MERN web application with WebSocket real-time updates, a graph algorithm
+engine, Redis caching, and Bull job queues. It is a production-grade portfolio project.
+
+## Tech Stack (Never Deviate From This)
+- Frontend: React 18, React Flow (for graph rendering), Zustand (state), Axios, Socket.io-client
+- Backend: Node.js 20, Express.js, Socket.io server, Bull + Redis queues
+- Database: MongoDB with Mongoose ODM
+- Cache: Redis (via ioredis)
+- Auth: JWT (access token 15min) + Refresh Token (httpOnly cookie, 7 days) + bcrypt
+- Testing: Jest + Supertest
+- Deployment: Render (backend), Vercel (frontend), MongoDB Atlas, Upstash Redis
+
+## Folder Structure (Always Maintain This)
+```
+flowforge/
+├── client/                  (React frontend)
+│   ├── src/
+│   │   ├── components/      (Reusable UI components)
+│   │   ├── pages/           (Route-level page components)
+│   │   ├── store/           (Zustand state stores)
+│   │   ├── hooks/           (Custom React hooks)
+│   │   ├── services/        (Axios API call functions)
+│   │   ├── socket/          (Socket.io client setup)
+│   │   └── utils/           (Helper functions)
+├── server/                  (Express backend)
+│   ├── src/
+│   │   ├── routes/          (Express route files)
+│   │   ├── controllers/     (Business logic)
+│   │   ├── middleware/       (Auth, error, rate-limit middleware)
+│   │   ├── models/          (Mongoose schemas)
+│   │   ├── algorithms/      (ALL CPM algorithm files — pure JS, no libraries)
+│   │   ├── services/        (Queue workers, email, notification services)
+│   │   ├── socket/          (Socket.io event handlers)
+│   │   └── utils/           (Helpers, constants)
+├── .cursorrules             (This file)
+├── .env.example             (All required env vars documented)
+└── README.md
+```
+
+## Coding Rules — Follow These Always
+
+### General
+- Use ES Modules (import/export) everywhere, NOT CommonJS (require)
+- Always use async/await, NEVER .then().catch() chains
+- Always wrap async route handlers in try/catch and call next(error) on failure
+- Use meaningful variable names — no single letters except loop counters
+- Write a JSDoc comment above every function explaining what it does
+
+### Backend Rules
+- Every Express route must go through the `authenticate` middleware before accessing protected data
+- Never put business logic inside route files — routes call controllers only
+- Never put database queries inside controllers — controllers call service functions
+- ALL algorithm code lives in server/src/algorithms/ — never mix with routes or controllers
+- Always validate request body with express-validator before processing
+- Return consistent JSON: { success: true, data: {} } or { success: false, error: "message" }
+- Use HTTP status codes correctly: 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 500 Server Error
+
+### Algorithm Rules (MOST IMPORTANT)
+- The 5 algorithms (topological sort, cycle detection, CPM forward pass, CPM backward pass,
+  cascade BFS) must be implemented as PURE FUNCTIONS — they take a graph as input and return
+  results. They must NOT touch the database or make HTTP calls.
+- Every algorithm function must have unit tests in /server/src/algorithms/__tests__/
+- Algorithm functions must handle edge cases: empty graph, single node, disconnected graph
+
+### Frontend Rules
+- Use Zustand for ALL shared state — no prop drilling beyond 2 levels
+- Axios instance must be configured with base URL and interceptor for JWT token injection
+- Socket.io client must be initialized once in a singleton and imported everywhere
+- Use React.memo() on heavy components like the graph canvas
+- All API error responses must be shown to the user — never silently swallow errors
+
+### Database Rules
+- Every Mongoose model must have timestamps: true
+- Never store plain text passwords — always bcrypt before saving
+- Index fields that are frequently queried: projectId on tasks, email on users
+- CPM computed fields (est, eft, lst, lft, float, isCritical) are always recalculated
+  by the algorithm engine — never manually set them in CRUD routes
+
+### Security Rules
+- JWT access token stored in memory (Zustand), NOT localStorage
+- Refresh token stored in httpOnly, secure, sameSite cookie ONLY
+- All user inputs sanitized with express-mongo-sanitize
+- Rate limiting on all endpoints via Redis-backed express-rate-limit
+- CORS configured to allow only the frontend URL
+
+## What "Done" Means for Every Feature
+A feature is only done when:
+1. Backend route works and returns correct data (tested with manual API call)
+2. Frontend shows the data correctly
+3. Error states are handled (what shows if API fails)
+4. Loading states are shown (spinner while waiting)
+5. At minimum, the core algorithm has a Jest unit test
+
+## Comments in Code
+- Write comments explaining WHY, not WHAT
+- Above every algorithm step, write a one-line plain English explanation
+- Example: // Forward pass: EST of this node = maximum EFT of all its predecessors
+
+------- END OF .cursorrules CONTENT -------
