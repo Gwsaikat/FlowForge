@@ -18,18 +18,12 @@ export default function LandingPage() {
   }
 
   const features = [
-    { icon: <Activity />, title: 'Real-time CPM', desc: 'Critical Path Method orchestration engine running directly in your browser. Millisecond calculations.' },
-    { icon: <GitMerge />, title: 'Smart Dependencies', desc: 'AI-powered dependency suggestions based on historical data patterns and NLP.' },
-    { icon: <Clock />, title: 'Ghost Paths', desc: 'Identify near-critical paths that could derail your project with our proprietary risk AI.' },
-    { icon: <Zap />, title: 'Instant Sandbox', desc: 'Simulate changes in an isolated environment before committing them to the live project.' },
-    { icon: <Target />, title: 'Deadline Tracking', desc: 'Advanced algorithms calculate optimistic vs realistic deadlines in real-time.' },
-    { icon: <Layout />, title: 'Dynamic Layout', desc: 'Dagre-powered automatic graph layout algorithm for perfectly organized task graphs.' },
-    { icon: <Move />, title: 'Interactive Canvas', desc: 'Pan, zoom, and drag nodes with smooth 60fps ReactFlow integration.' },
-    { icon: <Shield />, title: 'Impact Radius', desc: 'Visualize the cascading effects of a delayed task before it happens.' },
-    { icon: <Users />, title: 'Daily Standups', desc: 'LLM-generated daily standup notes summarizing critical blockers automatically.' },
-    { icon: <Rocket />, title: 'Prophet Advisor', desc: 'Chat directly with your project schedule via our GPT-4o integration.' },
-    { icon: <BarChart3 />, title: 'Health Scoring', desc: 'Continuous heuristic evaluation of your graph structure.' },
-    { icon: <Database />, title: 'State Sync', desc: 'Zustand-powered persistent state with seamless backend synchronization.' },
+    { icon: <Activity />, title: 'Instant Recalculation', desc: 'When a task slips, the system auto-recalculates and shows the exact deadline impact in seconds.' },
+    { icon: <GitMerge />, title: 'Parallel Opportunities', desc: 'Stop wasting time working sequentially. The system flags tasks that can run in parallel, saving days of work.' },
+    { icon: <Target />, title: 'Realistic Deadlines', desc: 'Does your team always underestimate? FlowForge learns the pattern and automatically predicts a realistic deadline.' },
+    { icon: <Shield />, title: 'Blast Radius Tracking', desc: 'Jira cards just turn red. FlowForge shows you exactly which downstream tasks and people are affected by a blocker.' },
+    { icon: <Clock />, title: 'Ghost Paths', desc: 'Identify near-critical paths that could derail your project with our proprietary risk AI before they slip.' },
+    { icon: <Zap />, title: 'What-If Sandbox', desc: 'Simulate emergency changes in an isolated environment before committing them to the live project.' },
   ];
 
   return (
@@ -59,10 +53,12 @@ export default function LandingPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="landing-badge">FlowForge 2.0 is live</div>
-            <h1>The Billion-Dollar<br />Critical Path Engine.</h1>
-            <p className="landing-subtitle">
-              Orchestrate complex projects with world-class CPM algorithms, AI-powered risk detection, and a fluid, 60fps graph canvas.
+            <div className="landing-badge">Stop guessing your deadlines</div>
+            <h1 style={{ fontSize: '3.5rem', lineHeight: 1.1, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
+              Know exactly when<br />you will ship.
+            </h1>
+            <p className="landing-subtitle" style={{ fontSize: '1.2rem', maxWidth: '600px', marginBottom: '2.5rem' }}>
+              When a task slips, don't panic. FlowForge instantly auto-recalculates deadline impacts, flags hidden parallel opportunities, and reveals the exact blast radius of every blocked task.
             </p>
             <div className="landing-cta">
               <Link to={isAuthenticated ? "/dashboard" : "/register"} className="btn btn-hero">
