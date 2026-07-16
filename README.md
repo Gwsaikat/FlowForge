@@ -2,8 +2,7 @@
 
 > "It tells you exactly which tasks will kill your deadline — before they do."
 
-**Live Demo:** [your-url.vercel.app](https://your-url.vercel.app)  
-**API:** [your-api.onrender.com/api/health](https://your-api.onrender.com/api/health)
+**Live Demo:** [your-url.vercel.app](https://client-one-bay-37.vercel.app/)  
 
 ## What It Solves
 
