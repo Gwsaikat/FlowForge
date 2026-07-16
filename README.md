@@ -17,7 +17,7 @@ When any team member updates a task, the entire graph recalculates and broadcast
 - **Backend:** Node.js, Express.js, Socket.io, Bull, Redis
 - **Database:** MongoDB with Mongoose
 - **Auth:** JWT + Refresh Token Rotation
-- **Deployment:** Render (API) + Vercel (frontend) + MongoDB Atlas + Upstash Redis
+- **Deployment:** Vercel (frontend) + MongoDB Atlas + Upstash Redis
 
 ## Core Algorithms (Implemented from Scratch)
 
